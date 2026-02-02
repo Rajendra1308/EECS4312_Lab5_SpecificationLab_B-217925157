@@ -45,4 +45,43 @@ def test_non_dict_request_raises():
     with pytest.raises(ValueError):
         is_allocation_feasible(resources, requests)
 
-"""TODO: Add at least 5 additional test cases to test your implementation."""
+def test_allocation_exact_capacity_match():
+    resources = {"CPU": 8, "RAM": 16}
+    requests = [
+        {"CPU": 3, "RAM": 6},
+        {"CPU": 5, "RAM": 10}
+    ]
+
+    assert is_allocation_feasible(resources, requests) is True
+def test_multiple_requests_multiple_resources():
+    resources = {"CPU": 10, "RAM": 32, "DISK": 100}
+    requests = [
+        {"CPU": 2, "RAM": 8},
+        {"CPU": 4, "DISK": 40},
+        {"RAM": 16, "DISK": 50}
+    ]
+
+    assert is_allocation_feasible(resources, requests) is True
+def test_request_for_unavailable_resource():
+    resources = {"CPU": 4, "RAM": 8}
+    requests = [
+        {"CPU": 2},
+        {"GPU": 1}
+    ]
+
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_negative_request_amount():
+    resources = {"CPU": 4}
+    requests = [
+        {"CPU": -1}
+    ]
+
+    assert is_allocation_feasible(resources, requests) is False
+
+def test_empty_requests_list():
+    resources = {"CPU": 4, "RAM": 8}
+    requests = []
+
+    assert is_allocation_feasible(resources, requests) is True
