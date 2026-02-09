@@ -623,5 +623,19 @@ Just tell me how formal your submission needs to be.
 
 
 
+
+You Said : add a few more tests to make test edge cases, and complete functional and non-functional requirements. Maximizing code coverage
+
+Now I'll add comprehensive tests to cover edge cases, boundary conditions, and maximize code coverage:
+
+
+Category	Tests Added
+Edge Cases	Empty resources/requests, empty dict in list, zero capacity, float values, cumulative overflow
+Boundary Conditions	Exact capacity match, capacity ±1, zero request amounts
+Input Validation	String, None, tuple, integer as invalid request types (ValueError)
+Multi-Resource	Partial requests, mixed resources, single resource failure
+Non-Functional	Large numbers, many requests (stress test), float precision
+
+
 No file chosenNo file chosen
 ChatGPT can make mistakes. Check important info. See Cookie Preferences.
