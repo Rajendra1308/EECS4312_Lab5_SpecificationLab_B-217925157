@@ -197,3 +197,177 @@ def test_large_numbers_exact_invalid():
     resources = {"cpu": 10**12}
     requests = [{"cpu": 10**12}]
     assert is_allocation_feasible(resources, requests) is False
+
+
+# ================= EXTRA EDGE & CONSTRAINT TESTS =================
+
+def test_all_resources_unused_valid():
+    # nothing allocated → everything leftover → valid
+    resources = {"cpu": 10, "ram": 20}
+    requests = []
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_only_one_resource_fully_consumed_but_others_left_valid():
+    resources = {"cpu": 5, "ram": 10, "disk": 20}
+    requests = [{"cpu": 5}]
+    # cpu fully consumed but ram/disk still free
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_each_resource_has_small_leftover_valid():
+    resources = {"cpu": 10, "ram": 10}
+    requests = [{"cpu": 9, "ram": 9}]
+    # both still have leftover
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_all_resources_exactly_consumed_multiple_requests_invalid():
+    resources = {"cpu": 6, "ram": 6}
+    requests = [
+        {"cpu": 3, "ram": 2},
+        {"cpu": 3, "ram": 4}
+    ]
+    # both exactly consumed
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_request_missing_some_resources_but_all_consumed_invalid():
+    resources = {"cpu": 5, "ram": 5}
+    requests = [
+        {"cpu": 5},
+        {"ram": 5}
+    ]
+    # both fully consumed → invalid
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_resource_never_requested_counts_as_leftover_valid():
+    resources = {"cpu": 5, "ram": 5, "disk": 10}
+    requests = [{"cpu": 5, "ram": 5}]
+    # disk unused → leftover exists
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_usage_accumulation_across_many_requests_invalid():
+    resources = {"cpu": 100}
+    requests = [{"cpu": 25}, {"cpu": 25}, {"cpu": 25}, {"cpu": 25}]
+    # exactly 100 used → invalid now
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_usage_accumulation_many_requests_with_leftover_valid():
+    resources = {"cpu": 100}
+    requests = [{"cpu": 25}, {"cpu": 25}, {"cpu": 25}]
+    # 75 used → leftover exists
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_float_precision_edge_exact_invalid():
+    resources = {"cpu": 1.0}
+    requests = [{"cpu": 0.1}, {"cpu": 0.2}, {"cpu": 0.3}, {"cpu": 0.4}]
+    # sums to 1.0 exactly → invalid
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_float_precision_edge_leftover_valid():
+    resources = {"cpu": 1.0}
+    requests = [{"cpu": 0.1}, {"cpu": 0.2}, {"cpu": 0.3}]
+    # 0.6 used → leftover exists
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_very_small_leftover_valid():
+    resources = {"cpu": 10}
+    requests = [{"cpu": 9.999}]
+    # tiny leftover still counts
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_many_resources_only_last_has_leftover_valid():
+    resources = {"cpu": 5, "ram": 5, "disk": 5}
+    requests = [
+        {"cpu": 5},
+        {"ram": 5},
+        {"disk": 4}
+    ]
+    # disk has leftover
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_many_resources_all_but_one_exact_then_last_exact_invalid():
+    resources = {"cpu": 5, "ram": 5, "disk": 5}
+    requests = [
+        {"cpu": 5},
+        {"ram": 5},
+        {"disk": 5}
+    ]
+    # all exact → invalid
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_request_with_zero_amount_does_not_affect_leftover():
+    resources = {"cpu": 5}
+    requests = [{"cpu": 0}]
+    # 5 still left
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_multiple_zero_requests_invalid_if_capacity_zero():
+    resources = {"cpu": 0}
+    requests = [{"cpu": 0}, {"cpu": 0}]
+    # fully consumed 0/0 → invalid by new rule
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_large_scale_many_resources_mixed():
+    resources = {
+        "cpu": 1000,
+        "ram": 2000,
+        "disk": 5000,
+        "net": 100
+    }
+    requests = [
+        {"cpu": 1000},
+        {"ram": 2000},
+        {"disk": 4999},
+        {"net": 100}
+    ]
+    # disk still has 1 leftover
+    assert is_allocation_feasible(resources, requests) is True
+
+
+def test_large_scale_all_exact_invalid():
+    resources = {
+        "cpu": 1000,
+        "ram": 2000,
+        "disk": 5000
+    }
+    requests = [
+        {"cpu": 1000},
+        {"ram": 2000},
+        {"disk": 5000}
+    ]
+    # all fully consumed
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_invalid_resource_type_inside_request():
+    resources = {"cpu": 10}
+    requests = [{"cpu": 5}, {"cpu": 3}, {"cpu": 2}, {"cpu": 0}]
+    # exact consumption → invalid
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_resource_with_never_used_and_zero_capacity_mix():
+    resources = {"cpu": 5, "gpu": 0}
+    requests = [{"cpu": 5}]
+    # gpu fully consumed (0/0), cpu fully consumed → no leftover anywhere
+    assert is_allocation_feasible(resources, requests) is False
+
+
+def test_resource_with_never_used_positive_capacity_valid():
+    resources = {"cpu": 5, "gpu": 10}
+    requests = [{"cpu": 5}]
+    # gpu unused → leftover exists
+    assert is_allocation_feasible(resources, requests) is True
